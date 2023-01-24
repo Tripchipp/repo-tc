@@ -1,397 +1,211 @@
-/*-----------------------------------------------------------------------------------
 /*
-/* Main JS
-/*
------------------------------------------------------------------------------------*/  
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+*/
 
 (function($) {
 
-   /*---------------------------------------------------- */
-	/* Preloader
-	------------------------------------------------------ */ 
-   $(window).load(function() {
+	var	$window = $(window),
+		$body = $('body'),
+		$sidebar = $('#sidebar');
 
-      // will first fade out the loading animation 
-    	$("#loader").fadeOut("slow", function(){
+	// Breakpoints.
+		breakpoints({
+			xlarge:   [ '1281px',  '1680px' ],
+			large:    [ '981px',   '1280px' ],
+			medium:   [ '737px',   '980px'  ],
+			small:    [ '481px',   '736px'  ],
+			xsmall:   [ null,      '480px'  ]
+		});
 
-        // will fade out the whole DIV that covers the website.
-        $("#preloader").delay(300).fadeOut("slow");
+	// Hack: Enable IE flexbox workarounds.
+		if (browser.name == 'ie')
+			$body.addClass('is-ie');
 
-      });     
+	// Play initial animations on page load.
+		$window.on('load', function() {
+			window.setTimeout(function() {
+				$body.removeClass('is-preload');
+			}, 100);
+		});
 
-  	})
+	// Forms.
 
-   /*---------------------------------------------------- */
-	/* Final Countdown Settings
-	------------------------------------------------------ */
-	var finalDate = '2017/01/01';
+		// Hack: Activate non-input submits.
+			$('form').on('click', '.submit', function(event) {
 
-	$('div#counter').countdown(finalDate)
-   	.on('update.countdown', function(event) {
+				// Stop propagation, default.
+					event.stopPropagation();
+					event.preventDefault();
 
-   		$(this).html(event.strftime('<span>%D <em>days</em></span>' + 
-   										 	 '<span>%H <em>hours</em></span>' + 
-   										 	 '<span>%M <em>minutes</em></span>' +
-   										 	 '<span>%S <em>seconds</em></span>'));
+				// Submit form.
+					$(this).parents('form').submit();
 
-   });
+			});
 
-   /*----------------------------------------------------*/
-	/*  Placeholder Plugin Settings
-	------------------------------------------------------ */  	 
-	$('input').placeholder() 
-	
+	// Sidebar.
+		if ($sidebar.length > 0) {
 
-   /*----------------------------------------------------- */
-   /* Modals
-   ------------------------------------------------------- */   
-   $('.modal-toggles ul').on('click', 'a', function(e) {
+			var $sidebar_a = $sidebar.find('a');
 
-   	var html = $('html'),
-   		 main = $('main, footer'),
-   		 footer = $('footer'),           
-          curMod = $(this).attr('href'),  
-          modal = $(curMod),
-          modClose = modal.find('#modal-close');          
-         
-		main.fadeOut(500, function(){
-			$('html,body').scrollTop(0);
-        	modal.addClass('is-visible');
-      });  
-      
-      e.preventDefault();
+			$sidebar_a
+				.addClass('scrolly')
+				.on('click', function() {
 
-      // for old ie
-      if (html.hasClass('oldie')) {
+					var $this = $(this);
 
-      	$(document).on('click', "#modal-close", function(evt) {
-	      	$('html,body').scrollTop(0); 
-	      	modal.removeClass('is-visible');
-	      	setTimeout(function() {      
-	        		main.fadeIn(500); 
-	        	}, 500);       
-	        	        
-	        	evt.preventDefault();
-      	});
+					// External link? Bail.
+						if ($this.attr('href').charAt(0) != '#')
+							return;
 
-      }
-      // other browsers
-      else {
+					// Deactivate all links.
+						$sidebar_a.removeClass('active');
 
-      	modClose.on('click', function(evt) {
-	      	$('html,body').scrollTop(0); 
-	      	modal.removeClass('is-visible');
-	      	setTimeout(function() {      
-	        		main.fadeIn(500); 
-	        	}, 500);       
-	        	        
-	        	evt.preventDefault();
-	      });
+					// Activate link *and* lock it (so Scrollex doesn't try to activate other links as we're scrolling to this one's section).
+						$this
+							.addClass('active')
+							.addClass('active-locked');
 
-      }     	
+				})
+				.each(function() {
 
-   });
+					var	$this = $(this),
+						id = $this.attr('href'),
+						$section = $(id);
 
-   /*---------------------------------------------------- */
-	/* Owl Carousel
-	------------------------------------------------------ */ 
-	$("#owl-slider").owlCarousel({
-        navigation: false,
-        pagination: true,
-        items: 4,
-        navigationText: false
-    });
+					// No section for this link? Bail.
+						if ($section.length < 1)
+							return;
 
+					// Scrollex.
+						$section.scrollex({
+							mode: 'middle',
+							top: '-20vh',
+							bottom: '-20vh',
+							initialize: function() {
 
-   /*----------------------------------------------------*/
-  	/* FitText Settings
-  	------------------------------------------------------ */
-  	setTimeout(function() {
+								// Deactivate section.
+									$section.addClass('inactive');
 
-   	  $('main h1, #mod-about h1').fitText(1.1, { minFontSize: '28px', maxFontSize: '38px' });
+							},
+							enter: function() {
 
-  	}, 100);
+								// Activate section.
+									$section.removeClass('inactive');
 
+								// No locked links? Deactivate all links and activate this section's one.
+									if ($sidebar_a.filter('.active-locked').length == 0) {
 
-   /*---------------------------------------------------- */
-   /* ajaxchimp
-	------------------------------------------------------ */
+										$sidebar_a.removeClass('active');
+										$this.addClass('active');
 
-	// Example MailChimp url: http://xxx.xxx.list-manage.com/subscribe/post?u=xxx&id=xxx
-	var mailChimpURL = 'http://facebook.us8.list-manage.com/subscribe/post?u=cdb7b577e41181934ed6a6a44&amp;id=e65110b38d'
+									}
 
+								// Otherwise, if this section's link is the one that's locked, unlock it.
+									else if ($this.hasClass('active-locked'))
+										$this.removeClass('active-locked');
 
-	$('#mc-form').ajaxChimp({
+							}
+						});
 
-		language: 'es',
-	   url: mailChimpURL
+				});
 
-	});
-
-	// Mailchimp translation
-	//
-	//  Defaults:
-	//	 'submit': 'Submitting...',
-	//  0: 'We have sent you a confirmation email',
-	//  1: 'Please enter a value',
-	//  2: 'An email address must contain a single @',
-	//  3: 'The domain portion of the email address is invalid (the portion after the @: )',
-	//  4: 'The username portion of the email address is invalid (the portion before the @: )',
-	//  5: 'This email address looks fake or invalid. Please enter a real email address'
-
-	$.ajaxChimp.translations.es = {
-	  'submit': 'Submitting...',
-	  0: '<i class="fa fa-check"></i> We have sent you a confirmation email',
-	  1: '<i class="fa fa-warning"></i> You must enter a valid e-mail address.',
-	  2: '<i class="fa fa-warning"></i> E-mail address is not valid.',
-	  3: '<i class="fa fa-warning"></i> E-mail address is not valid.',
-	  4: '<i class="fa fa-warning"></i> E-mail address is not valid.',
-	  5: '<i class="fa fa-warning"></i> E-mail address is not valid.'
-	}
-
-	/*---------------------------------------------------- */
-	/* Map
-	------------------------------------------------------ */
-	var latitude = 14.549072,
-		 longitude = 121.046958,
-		 map_zoom = 15,		 
-		 main_color = '#d8ac00',
-		 saturation_value= -30,
-		 brightness_value= 5,
-		 winWidth = $(window).width();		 
-
-   // marker url
-	if ( winWidth > 480 ) {
-		marker_url = 'images/icon-location-b.png';                    
-   } else {
-      marker_url = 'images/icon-location.png';            
-   }	 
-
-	// map style
-	var style = [ 
-		{
-			// set saturation for the labels on the map
-			elementType: "labels",
-			stylers: [
-				{ saturation: saturation_value }
-			]
-		},  
-	   {	// poi stands for point of interest - don't show these lables on the map 
-			featureType: "poi",
-			elementType: "labels",
-			stylers: [
-				{visibility: "off"}
-			]
-		},
-		{
-			// don't show highways lables on the map
-	      featureType: 'road.highway',
-	      elementType: 'labels',
-	      stylers: [
-	         { visibility: "off" }
-	      ]
-	   }, 
-		{ 	
-			// don't show local road lables on the map
-			featureType: "road.local", 
-			elementType: "labels.icon", 
-			stylers: [
-				{ visibility: "off" } 
-			] 
-		},
-		{ 
-			// don't show arterial road lables on the map
-			featureType: "road.arterial", 
-			elementType: "labels.icon", 
-			stylers: [
-				{ visibility: "off" }
-			] 
-		},
-		{
-			// don't show road lables on the map
-			featureType: "road",
-			elementType: "geometry.stroke",
-			stylers: [
-				{ visibility: "off" }
-			]
-		}, 
-		// style different elements on the map
-		{ 
-			featureType: "transit", 
-			elementType: "geometry.fill", 
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		}, 
-		{
-			featureType: "poi",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "poi.government",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "poi.sport_complex",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "poi.attraction",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "poi.business",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "transit",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "transit.station",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "landscape",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-			
-		},
-		{
-			featureType: "road",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		},
-		{
-			featureType: "road.highway",
-			elementType: "geometry.fill",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
-		}, 
-		{
-			featureType: "water",
-			elementType: "geometry",
-			stylers: [
-				{ hue: main_color },
-				{ visibility: "on" }, 
-				{ lightness: brightness_value }, 
-				{ saturation: saturation_value }
-			]
 		}
-	];
-		
-	// map options
-	var map_options = {
 
-      	center: new google.maps.LatLng(latitude, longitude),
-      	zoom: 15,
-      	panControl: false,
-      	zoomControl: false,
-        	mapTypeControl: false,
-      	streetViewControl: false,
-      	mapTypeId: google.maps.MapTypeId.ROADMAP,
-      	scrollwheel: false,
-      	styles: style
+	// Scrolly.
+		$('.scrolly').scrolly({
+			speed: 1000,
+			offset: function() {
 
-    	};
+				// If <=large, >small, and sidebar is present, use its height as the offset.
+					if (breakpoints.active('<=large')
+					&&	!breakpoints.active('<=small')
+					&&	$sidebar.length > 0)
+						return $sidebar.height();
 
-   // inizialize the map
-	var map = new google.maps.Map(document.getElementById('map-container'), map_options);
+				return 0;
 
-	// add a custom marker to the map				
-	var marker = new google.maps.Marker({
-
-		 	position: new google.maps.LatLng(latitude, longitude),
-		 	map: map,
-		 	visible: true,
-		 	icon: marker_url
-		 
+			}
 		});
 
-	// add custom buttons for the zoom-in/zoom-out on the map
-	function CustomZoomControl(controlDiv, map) {
-	
-		// grap the zoom elements from the DOM and insert them in the map 
-	 	var controlUIzoomIn= document.getElementById('map-zoom-in'),
-		  	 controlUIzoomOut= document.getElementById('map-zoom-out');
+	// Spotlights.
+		$('.spotlights > section')
+			.scrollex({
+				mode: 'middle',
+				top: '-10vh',
+				bottom: '-10vh',
+				initialize: function() {
 
-		controlDiv.appendChild(controlUIzoomIn);
-		controlDiv.appendChild(controlUIzoomOut);
+					// Deactivate section.
+						$(this).addClass('inactive');
 
-		// Setup the click event listeners and zoom-in or out according to the clicked element
-		google.maps.event.addDomListener(controlUIzoomIn, 'click', function() {
-			map.setZoom(map.getZoom()+1)
-		});
-		google.maps.event.addDomListener(controlUIzoomOut, 'click', function() {
-			map.setZoom(map.getZoom()-1)
-		});
-			
-	}
+				},
+				enter: function() {
 
-	var zoomControlDiv = document.createElement('div');
-	var zoomControl = new CustomZoomControl(zoomControlDiv, map);
+					// Activate section.
+						$(this).removeClass('inactive');
 
-	// insert the zoom div on the top right of the map
-	map.controls[google.maps.ControlPosition.TOP_RIGHT].push(zoomControlDiv);	
+				}
+			})
+			.each(function() {
 
+				var	$this = $(this),
+					$image = $this.find('.image'),
+					$img = $image.find('img'),
+					x;
 
+				// Assign image.
+					$image.css('background-image', 'url(' + $img.attr('src') + ')');
+
+				// Set background position.
+					if (x = $img.data('position'))
+						$image.css('background-position', x);
+
+				// Hide <img>.
+					$img.hide();
+
+			});
+
+	// Features.
+		$('.features')
+			.scrollex({
+				mode: 'middle',
+				top: '-20vh',
+				bottom: '-20vh',
+				initialize: function() {
+
+					// Deactivate section.
+						$(this).addClass('inactive');
+
+				},
+				enter: function() {
+
+					// Activate section.
+						$(this).removeClass('inactive');
+
+				}
+			});
 
 })(jQuery);
+
+//Here I go, messing up a perfectly good webpage.. ATT dabjulmaros
+
+
+window.onresize=e=>{
+	posFix();
+
+}
+
+function posFix(){
+
+  document.querySelector('.vanta-canvas').style.width=window.innerWidth+"px";
+	document.querySelector('.vanta-canvas').style.right=0;
+	document.querySelector('.vanta-canvas').style.left="";
+
+	const header = $('#intro > div > div > h1')[0];
+	const logo = $('.imageRotate')[0];
+	logo.style.top=`${header.offsetHeight/4-logo.width/2}px`;
+	logo.style.left=`calc(${-logo.width/2+"px"} + .5rem)`;
+}
+posFix();
